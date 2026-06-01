@@ -82,22 +82,20 @@ async function callAI(messages, tools) {
   return data.content;
 }
 
-async function searchSimilarJobs(title, team, level) {
-  const content = await callAI([{ role:"user", content:`Search for job postings for "${level} ${title}" roles in the ${team} domain at defense tech or autonomous robotics companies (Anduril, Shield AI, Elbit, Rafael, IAI, Boston Dynamics, AeroVironment, or similar). Extract ONLY requirements/qualifications from 2-3 real examples. Return plain-text bullet summary: education, years of experience, technical skills, tools, domain knowledge. No company names, no preamble.` }], [{ type:"web_search_20250305", name:"web_search" }]);
-  return content.filter(b=>b.type==="text").map(b=>b.text).join("\n").trim();
-}
-
 async function generateWithAI(formData, onStatus) {
-  onStatus("🔍 Searching similar job postings…");
-  let marketContext = "Using AI knowledge only.";
-  try { marketContext = await searchSimilarJobs(formData.title, formData.team, formData.level); } catch(e) {}
   onStatus("✍️ Drafting job description…");
-  const prompt = `You are a copywriter for FUSE, a defense-tech startup (subsidiary of Elbit Systems) building autonomous and robotic platforms for MUM-T. Bold, direct, human tone.\n\nRole: ${formData.level} ${formData.title} | Team: ${formData.team} | Location: ${formData.location}\nExtra: ${formData.notes||"none"}\n\nMARKET RESEARCH:\n${marketContext}\n\nReturn ONLY valid JSON:\n{"roleIntro":"2-3 sentences","responsibilities":["verb phrase"],"requirements":["req","req – advantage"],"preferredQuals":["pref – advantage"]}\n\nRules: responsibilities 6-8 items; requirements 7-10 (last 2-3 end "– advantage"); preferredQuals 2-4; short sentences, active voice.`;
+  const prompt = `You are a copywriter for FUSE, a defense-tech startup (subsidiary of Elbit Systems) building autonomous and robotic platforms for MUM-T. Bold, direct, human tone. No fluff.
+
+Role: ${formData.level} ${formData.title} | Team: ${formData.team} | Location: ${formData.location}
+Extra context: ${formData.notes||"none"}
+
+Return ONLY valid JSON (no markdown):
+{"roleIntro":"2-3 sentences: role context, tech stack, mission impact","responsibilities":["verb phrase"],"requirements":["req","req – advantage"],"preferredQuals":["pref – advantage"]}
+
+Rules: responsibilities 6-8 items (action verbs); requirements 7-10 (last 2-3 end with – advantage); preferredQuals 2-4 (all end with – advantage); short sentences, active voice.`;
   const content = await callAI([{ role:"user", content:prompt }]);
   const text = content.map(i=>i.text||"").join("").replace(/```json|```/g,"").trim();
-  const result = JSON.parse(text);
-  result._marketContext = marketContext;
-  return result;
+  return JSON.parse(text);
 }
 
 // ─── BulletEditor ────────────────────────────────────────────────────────
@@ -165,7 +163,6 @@ export default function App() {
       if (aiMode) {
         const ai = await generateWithAI({title,team,level,location,notes},(msg)=>setStatus({type:"loading",msg}));
         ri=ai.roleIntro; resp=ai.responsibilities; reqs=ai.requirements; pref=ai.preferredQuals||[];
-        if(ai._marketContext) setMarketInsights(ai._marketContext);
         setRoleIntro(ri); setResponsibilities(resp); setRequirements(reqs);
         if(pref.length){setHasPreferred(true);setPreferredQuals(pref);}
       }
