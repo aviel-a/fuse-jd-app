@@ -73,7 +73,7 @@ function generateDocx(data) {
 
 // ─── API call (goes through /api/anthropic proxy) ────────────────────────
 async function callAI(messages, tools) {
-  const body = { model: "claude-sonnet-4-20250514", max_tokens: 1200, messages };
+  const body = { model: "claude-sonnet-4-5", max_tokens: 1200, messages };
   if (tools) body.tools = tools;
   const res = await fetch("/api/anthropic", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error?.message || `API error ${res.status}`); }
