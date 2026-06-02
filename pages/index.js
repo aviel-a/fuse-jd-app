@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Head from "next/head";
 
-const TEAL = "#00B4A6";
+const TEAL = "#F5C400";
 const DARK = "#0a0f0e";
 const CARD = "#111918";
 const BORDER = "#1e2e2c";
@@ -42,7 +42,7 @@ function buildZip(files) {
 
 // ─── DOCX builder ────────────────────────────────────────────────────────
 function generateDocx(data) {
-  const T="00B4A6",G="555555";
+  const T="F5C400",G="555555";
   const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
   const para=(text,o={})=>{const sz=o.size||21,b=o.bold?"<w:b/>":"",i=o.italic?"<w:i/>":"",c=o.color?`<w:color w:val="${o.color}"/>`:"";const sp=o.spaceBefore?`<w:spacing w:before="${o.spaceBefore}" w:after="${o.spaceAfter!==undefined?o.spaceAfter:80}"/>`:`<w:spacing w:after="${o.spaceAfter!==undefined?o.spaceAfter:80}"/>`;return`<w:p><w:pPr>${sp}</w:pPr><w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/>${b}${i}<w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/>${c}</w:rPr><w:t xml:space="preserve">${esc(text)}</w:t></w:r></w:p>`;};
   const h=t=>para(t,{bold:true,size:26,color:T,spaceBefore:240,spaceAfter:120});
@@ -193,11 +193,14 @@ export default function App() {
 
         {/* Header */}
         <div style={{display:"flex",alignItems:"flex-start",gap:20,marginBottom:48,paddingBottom:32,borderBottom:`1px solid ${BORDER}`}}>
-          <div style={{width:48,height:48,background:TEAL,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,clipPath:"polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"}}>
-            <span style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:18,color:DARK}}>F</span>
+          <div style={{flexShrink:0,display:"flex",alignItems:"center"}}>
+            <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <polygon points="26,2 34,18 52,18 38,30 44,48 26,38 8,48 14,30 0,18 18,18" fill="#F5C400"/>
+              <polygon points="26,10 31,20 42,20 33,27 37,38 26,31 15,38 19,27 10,20 21,20" fill="#1a1400"/>
+            </svg>
           </div>
           <div>
-            <h1 style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:26,color:"#fff",letterSpacing:"-0.5px"}}>JD Generator</h1>
+            <h1 style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:26,letterSpacing:"-0.5px"}}><span style={{color:"#F5C400"}}>FUSE</span> <span style={{color:"#fff"}}>JD Generator</span></h1>
             <p style={{fontSize:13,color:MUTED,marginTop:6,fontWeight:300}}>FUSE · Defense Autonomy & Robotics · Elbit Systems</p>
           </div>
         </div>
@@ -258,7 +261,7 @@ export default function App() {
 
           {status&&(
             <div style={{background:status.type==="error"?"#1a0a0a":status.type==="success"?"#0a1f18":CARD,border:`1px solid ${status.type==="error"?"#4a1a1a":status.type==="success"?"#1a3d30":BORDER}`,borderRadius:8,padding:"14px 18px",marginTop:16,fontFamily:"monospace",fontSize:12,color:status.type==="error"?"#ff8080":status.type==="success"?"#7aedc5":TEAL,display:"flex",alignItems:"center",gap:10}}>
-              {status.type==="loading"&&<div style={{width:14,height:14,border:"2px solid rgba(0,180,166,0.3)",borderTopColor:TEAL,borderRadius:"50%",animation:"spin 0.7s linear infinite",flexShrink:0}}/>}
+              {status.type==="loading"&&<div style={{width:14,height:14,border:"2px solid rgba(245,196,0,0.3)",borderTopColor:"#F5C400",borderRadius:"50%",animation:"spin 0.7s linear infinite",flexShrink:0}}/>}
               {status.type==="success"&&"✓"}{status.type==="error"&&"✕"}
               <span>{status.msg}</span>
             </div>
@@ -278,7 +281,7 @@ export default function App() {
                 {showInsights?"▲ Hide":"▼ Show"} market research used for qualifications
               </button>
               {showInsights&&(
-                <div style={{background:"#0d1917",border:`1px solid ${BORDER}`,borderLeft:`2px solid ${TEAL}`,borderRadius:6,padding:"14px 16px",marginTop:8,fontSize:12,lineHeight:1.7,color:"#6aaba6",fontFamily:"monospace",whiteSpace:"pre-wrap",maxHeight:220,overflowY:"auto"}}>
+                <div style={{background:"#0d1917",border:`1px solid ${BORDER}`,borderLeft:"2px solid #F5C400",borderRadius:6,padding:"14px 16px",marginTop:8,fontSize:12,lineHeight:1.7,color:"#6aaba6",fontFamily:"monospace",whiteSpace:"pre-wrap",maxHeight:220,overflowY:"auto"}}>
                   {marketInsights}
                 </div>
               )}
