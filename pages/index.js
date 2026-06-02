@@ -98,6 +98,92 @@ Rules: responsibilities 6-8 items (action verbs); requirements 7-10 (last 2-3 en
   return JSON.parse(text);
 }
 
+// ─── Shared JD boilerplate ───────────────────────────────────────────────
+const MISSION_HOOK = [
+  "Let's make an impact on tomorrow's battlefield.",
+  "FUSE is where cutting-edge defense technology meets real-world impact.",
+  "We're redefining man unmanned teaming (MUM-T) through a unified, intelligent ecosystem that connects autonomous and robotic platforms across land and air.",
+];
+const SIGNOFF = [
+  "This is your chance to be a part of a new and exciting opportunity, work on complex, high-stakes systems, push the boundaries of autonomy and robotics, and build technology that makes an instant impact.",
+  "If you're looking to move fast, think big, and shape what comes next, we want you with us.",
+];
+
+// ─── Refine with AI ──────────────────────────────────────────────────────
+async function refineWithAI(currentData, instruction, onStatus) {
+  onStatus("✍️ Refining job description…");
+  const prompt = `You are a copywriter for FUSE, a defense-tech startup building autonomous/robotic platforms. Bold, direct, human tone. No fluff.
+
+Current JD for ${currentData.level} ${currentData.title} | Team: ${currentData.team} | Location: ${currentData.location}:
+roleIntro: ${currentData.roleIntro}
+responsibilities: ${JSON.stringify(currentData.responsibilities)}
+requirements: ${JSON.stringify(currentData.requirements)}
+preferredQuals: ${JSON.stringify(currentData.preferredQuals)}
+
+User instruction: "${instruction}"
+
+Apply the instruction and return ONLY valid JSON (no markdown):
+{"roleIntro":"...","responsibilities":[...],"requirements":[...],"preferredQuals":[...]}
+
+Keep unchanged sections intact. Maintain FUSE tone: active voice, short sentences, no fluff. Nice-to-haves end with – advantage.`;
+  const content = await callAI([{ role: "user", content: prompt }]);
+  const text = content.map(i => i.text || "").join("").replace(/```json|```/g, "").trim();
+  return JSON.parse(text);
+}
+
+// ─── JD Preview component ────────────────────────────────────────────────
+function JDPreview({ title, level, team, location, jobNumber, roleIntro, responsibilities, requirements, hasPreferred, preferredQuals }) {
+  const secHead = (text) => (
+    <div style={{ fontFamily: "DM Mono,monospace", fontSize: 11, fontWeight: 500, color: TEAL, letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: 10, marginTop: 22 }}>
+      {text}
+    </div>
+  );
+  return (
+    <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "32px 36px", overflowY: "auto", maxHeight: 620 }}>
+      <div style={{ fontFamily: "Syne,sans-serif", fontWeight: 800, fontSize: 30, color: TEAL, lineHeight: 1.2, marginBottom: 10 }}>
+        {level} {title}
+      </div>
+      <div style={{ height: 2, background: TEAL, marginBottom: 12 }} />
+      <div style={{ fontFamily: "DM Mono,monospace", fontSize: 12, color: "#666", marginBottom: 24 }}>
+        {location}{"  |  "}{team}{jobNumber ? `  |  Job #${jobNumber}` : ""}
+      </div>
+      {MISSION_HOOK.map((line, i) => (
+        <p key={i} style={{ fontStyle: "italic", color: MUTED, fontSize: 13.5, lineHeight: 1.65, marginBottom: 6 }}>{line}</p>
+      ))}
+      <div style={{ height: 16 }} />
+      <p style={{ fontWeight: 600, color: "#d4eeec", fontSize: 14, marginBottom: 8 }}>We are looking for</p>
+      <p style={{ fontSize: 13.5, lineHeight: 1.75, color: "#d4eeec", marginBottom: 4 }}>{roleIntro}</p>
+      {secHead("In this role you will")}
+      <ul style={{ paddingLeft: 18, margin: 0 }}>
+        {responsibilities.filter(r => r.trim()).map((r, i) => (
+          <li key={i} style={{ fontSize: 13.5, lineHeight: 1.75, color: "#d4eeec", marginBottom: 4 }}>{r}</li>
+        ))}
+      </ul>
+      {secHead("Requirements")}
+      <ul style={{ paddingLeft: 18, margin: 0 }}>
+        {requirements.filter(r => r.trim()).map((r, i) => (
+          <li key={i} style={{ fontSize: 13.5, lineHeight: 1.75, color: "#d4eeec", marginBottom: 4 }}>{r}</li>
+        ))}
+      </ul>
+      {hasPreferred && preferredQuals.some(q => q.trim()) && (
+        <>
+          {secHead("Preferred qualifications")}
+          <ul style={{ paddingLeft: 18, margin: 0 }}>
+            {preferredQuals.filter(q => q.trim()).map((q, i) => (
+              <li key={i} style={{ fontSize: 13.5, lineHeight: 1.75, color: "#d4eeec", marginBottom: 4 }}>{q}</li>
+            ))}
+          </ul>
+        </>
+      )}
+      <div style={{ height: 24 }} />
+      <p style={{ fontSize: 13.5, lineHeight: 1.75, color: "#d4eeec", marginBottom: 10 }}>{SIGNOFF[0]}</p>
+      <p style={{ fontSize: 13.5, lineHeight: 1.75, color: MUTED, fontStyle: "italic", marginBottom: 20 }}>{SIGNOFF[1]}</p>
+      <p style={{ fontFamily: "DM Mono,monospace", fontSize: 11, color: "#555", marginBottom: 4 }}>Only relevant applications will be answered**</p>
+      <p style={{ fontFamily: "DM Mono,monospace", fontSize: 11, color: "#555" }}>{location}#</p>
+    </div>
+  );
+}
+
 // ─── BulletEditor ────────────────────────────────────────────────────────
 function BulletEditor({ items, onChange, placeholder }) {
   return (
@@ -135,6 +221,8 @@ export default function App() {
   const [aiMode,setAiMode]=useState(true);
   const [marketInsights,setMarketInsights]=useState(null);
   const [showInsights,setShowInsights]=useState(false);
+  const [refinementNote,setRefinementNote]=useState("");
+  const [refining,setRefining]=useState(false);
 
   const field=(label,children)=>(
     <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:16}}>
@@ -180,6 +268,38 @@ export default function App() {
     const url=URL.createObjectURL(docxBlob),a=document.createElement("a");
     a.href=url; a.download=`FUSE_JD_${level}_${title}_${new Date().toISOString().slice(0,10)}.docx`.replace(/\s+/g,"_");
     a.click(); URL.revokeObjectURL(url);
+  };
+
+  const handleShare = () => {
+    const data = { title, level, team, location, jobNumber, roleIntro, responsibilities, requirements, hasPreferred, preferredQuals };
+    const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
+    window.open(`/view?data=${encodeURIComponent(encoded)}`, "_blank");
+  };
+
+  const handleRefine = async () => {
+    if (!refinementNote.trim()) return;
+    setRefining(true);
+    try {
+      const ai = await refineWithAI(
+        { level, title, team, location, roleIntro, responsibilities, requirements, preferredQuals },
+        refinementNote,
+        (msg) => setStatus({ type: "loading", msg })
+      );
+      const ri = ai.roleIntro || roleIntro;
+      const resp = ai.responsibilities || responsibilities;
+      const reqs = ai.requirements || requirements;
+      const pref = ai.preferredQuals || preferredQuals;
+      setRoleIntro(ri); setResponsibilities(resp); setRequirements(reqs);
+      if (pref.length) { setHasPreferred(true); setPreferredQuals(pref); }
+      const blob = generateDocx({ title, team, level, location, jobNumber, roleIntro: ri, responsibilities: resp.filter(r => r.trim()), requirements: reqs.filter(r => r.trim()), preferredQuals: pref.filter(q => q.trim()), hasPreferred: pref.length > 0 || hasPreferred });
+      setDocxBlob(blob);
+      setStatus({ type: "success", msg: "Refined — document updated." });
+      setRefinementNote("");
+    } catch (err) {
+      setStatus({ type: "error", msg: err.message });
+    } finally {
+      setRefining(false);
+    }
   };
 
   const toggleStyle={width:36,height:20,borderRadius:10,background:BORDER,position:"relative",transition:"background 0.2s",flexShrink:0,cursor:"pointer"};
@@ -268,10 +388,16 @@ export default function App() {
           )}
 
           {docxBlob&&(
-            <button onClick={handleDownload}
-              style={{background:"transparent",border:`1px solid ${TEAL}`,borderRadius:6,color:TEAL,cursor:"pointer",fontFamily:"monospace",fontSize:12,padding:"8px 16px",marginTop:10,display:"flex",alignItems:"center",gap:6}}>
-              ↓ Download .docx
-            </button>
+            <div style={{display:"flex",gap:10,marginTop:10}}>
+              <button onClick={handleDownload}
+                style={{background:"transparent",border:`1px solid ${TEAL}`,borderRadius:6,color:TEAL,cursor:"pointer",fontFamily:"monospace",fontSize:12,padding:"8px 16px",display:"flex",alignItems:"center",gap:6}}>
+                ↓ Download .docx
+              </button>
+              <button onClick={handleShare}
+                style={{background:"transparent",border:`1px solid ${BORDER}`,borderRadius:6,color:"#7aada9",cursor:"pointer",fontFamily:"monospace",fontSize:12,padding:"8px 16px",display:"flex",alignItems:"center",gap:6}}>
+                ↗ Share
+              </button>
+            </div>
           )}
 
           {marketInsights&&(
@@ -288,6 +414,20 @@ export default function App() {
             </>
           )}
         </div>
+
+        {docxBlob&&(
+          <div style={{marginTop:8,paddingBottom:80}}>
+            <JDPreview title={title} level={level} team={team} location={location} jobNumber={jobNumber} roleIntro={roleIntro} responsibilities={responsibilities} requirements={requirements} hasPreferred={hasPreferred} preferredQuals={preferredQuals}/>
+            <div style={{marginTop:14,display:"flex",gap:10,alignItems:"flex-start"}}>
+              <textarea value={refinementNote} onChange={e=>setRefinementNote(e.target.value)} placeholder="Tell the AI what to change… e.g. Make the tone more senior, add Python to requirements"
+                style={{flex:1,background:CARD,border:`1px solid ${BORDER}`,borderRadius:6,color:"#d4eeec",fontSize:13.5,padding:"10px 14px",fontFamily:"Inter,sans-serif",outline:"none",minHeight:52,resize:"vertical",lineHeight:1.5}}/>
+              <button onClick={handleRefine} disabled={refining||!refinementNote.trim()}
+                style={{background:"transparent",border:`1px solid ${TEAL}`,borderRadius:6,color:TEAL,cursor:refining||!refinementNote.trim()?"not-allowed":"pointer",fontFamily:"monospace",fontSize:12,padding:"12px 18px",opacity:refining||!refinementNote.trim()?0.45:1,whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+                {refining?<><div style={{width:12,height:12,border:"2px solid rgba(245,196,0,0.3)",borderTopColor:TEAL,borderRadius:"50%",animation:"spin 0.7s linear infinite"}}/>Refining…</>:"↻ Refine"}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
