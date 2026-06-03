@@ -40,27 +40,8 @@ function buildZip(files) {
   return new Blob([out],{type:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
 }
 
-// ─── FUSE logo PNG via canvas ─────────────────────────────────────────────
-function generateFuseLogo() {
-  if (typeof document === "undefined") return null;
-  const starPx = 90, scale = starPx / 52, W = 300, H = starPx;
-  const canvas = document.createElement("canvas");
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, W, H);
-  const draw = (pts, color) => {
-    ctx.fillStyle = color; ctx.beginPath();
-    pts.forEach(([x,y],i) => i ? ctx.lineTo(x*scale,y*scale) : ctx.moveTo(x*scale,y*scale));
-    ctx.closePath(); ctx.fill();
-  };
-  draw([[26,2],[34,18],[52,18],[38,30],[44,48],[26,38],[8,48],[14,30],[0,18],[18,18]],"#F5C400");
-  draw([[26,10],[31,20],[42,20],[33,27],[37,38],[26,31],[15,38],[19,27],[10,20],[21,20]],"#1a1400");
-  ctx.fillStyle = "#F5C400";
-  ctx.font = "bold 48px Arial";
-  ctx.textBaseline = "middle";
-  ctx.fillText("FUSE", starPx + 12, H / 2);
-  return canvas.toDataURL("image/png").split(",")[1];
-}
+// ─── FUSE logo loaded from public/Fuse_Logo.PNG ───────────────────────────
+let _fuseLogo = null; // { b64, cx, cy } — set on page load
 function base64ToBytes(b64) {
   const bin = atob(b64), arr = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
@@ -78,8 +59,10 @@ function generateDocx(data) {
   const sp=()=>`<w:p><w:pPr><w:spacing w:after="120"/></w:pPr></w:p>`;
   const{title,team,level,location,jobNumber,roleIntro,responsibilities,requirements,preferredQuals,hasPreferred}=data;
 
-  const logoPng=generateFuseLogo();
-  const logoXml=logoPng?`<w:p><w:pPr><w:jc w:val="right"/><w:spacing w:after="0"/></w:pPr><w:r><w:drawing><wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" distT="0" distB="0" distL="0" distR="0"><wp:extent cx="2286000" cy="685800"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="1" name="FUSE Logo"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="1" name="FUSE Logo"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rId3"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="2286000" cy="685800"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`:"";
+  const logoPng=_fuseLogo?.b64||null;
+  const logoCx=_fuseLogo?.cx||1828800;
+  const logoCy=_fuseLogo?.cy||685800;
+  const logoXml=logoPng?`<w:p><w:pPr><w:jc w:val="right"/><w:spacing w:after="0"/></w:pPr><w:r><w:drawing><wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${logoCx}" cy="${logoCy}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="1" name="FUSE Logo"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="1" name="FUSE Logo"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rId3"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${logoCx}" cy="${logoCy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`:"";
 
   const parts=[
     logoXml,
@@ -99,7 +82,11 @@ function generateDocx(data) {
     para("If you're looking to move fast, think big, and shape what comes next, we want you with us.",{italic:true,spaceAfter:0}),
     sp(),
     h("About FUSE"),
-    para("FUSE is building the next generation of autonomous defense technology — intelligent robotic systems and multi-domain platforms that redefine how forces operate, sense, decide, and act. Our teams own the full stack end-to-end: from hardware and embedded systems to robotics, autonomy, AI, and real-time decision-making. Under Elbit Systems, we combine the speed and ownership culture of a startup with the manufacturing power of a global defense leader.",{spaceAfter:80}),
+    para("FUSE is building the next generation of autonomous defense technology: intelligent robotic systems and multi-domain platforms that redefine how forces operate, sense, decide, and act. Our systems work alongside human operators for surveillance, strike, and mission support.",{spaceAfter:80}),
+    para("At FUSE, we bring together industry pioneers into one agile organization under Elbit Systems, combining the speed, sense of ownership, and innovation culture of a startup with the manufacturing power and operational strength of a global defense leader.",{spaceAfter:80}),
+    para("Our teams own the full stack end-to-end, from mechanical design, hardware, and embedded systems to robotics, autonomy, AI, and real-time multi-platform decision-making.",{spaceAfter:80}),
+    para("Here, technology goes from concept to operational deployment. Fast.",{italic:true,spaceAfter:40}),
+    para("Here, your work doesn't sit in a backlog. It takes off.",{italic:true,spaceAfter:0}),
     sp(),
     para("Only relevant applications will be answered**",{color:G,spaceAfter:0})
   );
@@ -276,6 +263,21 @@ export default function App() {
   const [refinementNote,setRefinementNote]=useState("");
   const [refining,setRefining]=useState(false);
   const [showPreview,setShowPreview]=useState(false);
+  useEffect(()=>{
+    const img=new Image();
+    img.onload=()=>{
+      const c=document.createElement("canvas");
+      c.width=img.width; c.height=img.height;
+      c.getContext("2d").drawImage(img,0,0);
+      const b64=c.toDataURL("image/png").split(",")[1];
+      const maxCx=1828800;
+      const rawCx=Math.round(img.width/96*914400);
+      const cx=Math.min(rawCx,maxCx);
+      const cy=Math.round(img.height/96*914400*(cx/rawCx));
+      _fuseLogo={b64,cx,cy};
+    };
+    img.src="/Fuse_Logo.PNG";
+  },[]);
   useEffect(()=>{
     const onKey=(e)=>{if(e.key==="Escape")setShowPreview(false);};
     window.addEventListener("keydown",onKey);
