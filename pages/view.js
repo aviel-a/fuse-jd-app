@@ -4,7 +4,11 @@ import { useRouter } from "next/router";
 
 const TEAL = "#F5C400";
 
-const ABOUT_FUSE = "FUSE is building the next generation of autonomous defense technology: intelligent robotic systems and multi-domain platforms that redefine how forces operate, sense, decide, and act. Our systems work alongside human operators for surveillance, strike, and mission support. At FUSE, we bring together industry pioneers into one agile organization under Elbit Systems, combining the speed, sense of ownership, and innovation culture of a startup with the manufacturing power and operational strength of a global defense leader. Our teams own the full stack end-to-end, from mechanical design, hardware, and embedded systems to robotics, autonomy, AI, and real-time multi-platform decision-making. Here, technology goes from concept to operational deployment. Fast. Your work doesn't sit in a backlog. It takes off.";
+const ABOUT_FUSE_PARAS = [
+  "FUSE is building the next generation of autonomous defense technology: intelligent robotic systems and multi-domain platforms that redefine how forces operate, sense, decide, and act. Our systems work alongside human operators for surveillance, strike, and mission support.",
+  "At FUSE, we bring together industry pioneers into one agile organization under Elbit Systems, combining the speed, sense of ownership, and innovation culture of a startup with the manufacturing power and operational strength of a global defense leader. Our teams own the full stack end-to-end, from mechanical design, hardware, and embedded systems to robotics, autonomy, AI, and real-time multi-platform decision-making.",
+  "Here, technology goes from concept to operational deployment. Fast. Your work doesn't sit in a backlog. It takes off.",
+];
 const SIGNOFF = [
   "This is your chance to be a part of a new and exciting opportunity, work on complex, high-stakes systems, push the boundaries of autonomy and robotics, and build technology that makes an instant impact.",
   "If you're looking to move fast, think big, and shape what comes next, we want you with us.",
@@ -95,7 +99,9 @@ export default function ViewPage() {
         </div>
 
         {/* About FUSE */}
-        <p style={{ fontSize: 14.5, lineHeight: 1.75, color: "#333", marginBottom: 28 }}>{ABOUT_FUSE}</p>
+        {ABOUT_FUSE_PARAS.map((p,i)=>(
+          <p key={i} style={{ fontSize:14.5, lineHeight:1.75, color:"#333", marginBottom:i<ABOUT_FUSE_PARAS.length-1?16:28 }}>{p}</p>
+        ))}
 
         {/* We are looking for */}
         <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 10, color: "#1a1a1a" }}>We are looking for</p>
