@@ -40,7 +40,7 @@ function buildZip(files) {
   return new Blob([out],{type:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
 }
 
-// ─── FUSE logo loaded from public/Fuse_Logo.PNG ───────────────────────────
+// ─── FUSE logo loaded from public/Fuse_logo.jpeg ─────────────────────────
 let _fuseLogo = null; // { b64, cx, cy } — set on page load
 function base64ToBytes(b64) {
   const bin = atob(b64), arr = new Uint8Array(bin.length);
@@ -68,9 +68,11 @@ function generateDocx(data) {
     logoXml,
     `<w:p><w:pPr><w:spacing w:after="80"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:b/><w:sz w:val="52"/><w:szCs w:val="52"/><w:color w:val="${T}"/></w:rPr><w:t>${esc(`${level} ${title}`)}</w:t></w:r></w:p>`,
     rule(),para(`${location}  |  ${team}${jobNumber?"  |  Job #"+jobNumber:""}`,{size:20,color:G,spaceAfter:200}),
-    para("Let's make an impact on tomorrow's battlefield.",{italic:true,spaceAfter:40}),
-    para("FUSE is where cutting-edge defense technology meets real-world impact.",{italic:true,spaceAfter:40}),
-    para("We're redefining man unmanned teaming (MUM-T) through a unified, intelligent ecosystem that connects autonomous and robotic platforms across land and air.",{italic:true,spaceAfter:0}),
+    para("FUSE is building the next generation of autonomous defense technology: intelligent robotic systems and multi-domain platforms that redefine how forces operate, sense, decide, and act. Our systems work alongside human operators for surveillance, strike, and mission support.",{spaceAfter:80}),
+    para("At FUSE, we bring together industry pioneers into one agile organization under Elbit Systems, combining the speed, sense of ownership, and innovation culture of a startup with the manufacturing power and operational strength of a global defense leader.",{spaceAfter:80}),
+    para("Our teams own the full stack end-to-end, from mechanical design, hardware, and embedded systems to robotics, autonomy, AI, and real-time multi-platform decision-making.",{spaceAfter:80}),
+    para("Here, technology goes from concept to operational deployment. Fast.",{italic:true,spaceAfter:40}),
+    para("Here, your work doesn't sit in a backlog. It takes off.",{italic:true,spaceAfter:80}),
     sp(),para("We are looking for",{bold:true,spaceAfter:80}),para(roleIntro,{spaceAfter:0}),sp(),
     h("In this role you will"),...responsibilities.filter(r=>r.trim()).map(bl),sp(),
     h("Requirements"),...requirements.filter(r=>r.trim()).map(bl),
@@ -80,13 +82,6 @@ function generateDocx(data) {
     sp(),
     para("This is your chance to be a part of a new and exciting opportunity, work on complex, high-stakes systems, push the boundaries of autonomy and robotics, and build technology that makes an instant impact.",{spaceAfter:80}),
     para("If you're looking to move fast, think big, and shape what comes next, we want you with us.",{italic:true,spaceAfter:0}),
-    sp(),
-    h("About FUSE"),
-    para("FUSE is building the next generation of autonomous defense technology: intelligent robotic systems and multi-domain platforms that redefine how forces operate, sense, decide, and act. Our systems work alongside human operators for surveillance, strike, and mission support.",{spaceAfter:80}),
-    para("At FUSE, we bring together industry pioneers into one agile organization under Elbit Systems, combining the speed, sense of ownership, and innovation culture of a startup with the manufacturing power and operational strength of a global defense leader.",{spaceAfter:80}),
-    para("Our teams own the full stack end-to-end, from mechanical design, hardware, and embedded systems to robotics, autonomy, AI, and real-time multi-platform decision-making.",{spaceAfter:80}),
-    para("Here, technology goes from concept to operational deployment. Fast.",{italic:true,spaceAfter:40}),
-    para("Here, your work doesn't sit in a backlog. It takes off.",{italic:true,spaceAfter:0}),
     sp(),
     para("Only relevant applications will be answered**",{color:G,spaceAfter:0})
   );
@@ -276,7 +271,7 @@ export default function App() {
       const cy=Math.round(img.height/96*914400*(cx/rawCx));
       _fuseLogo={b64,cx,cy};
     };
-    img.src="/Fuse_Logo.PNG";
+    img.src="/Fuse_logo.jpeg";
   },[]);
   useEffect(()=>{
     const onKey=(e)=>{if(e.key==="Escape")setShowPreview(false);};
