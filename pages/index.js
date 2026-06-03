@@ -324,6 +324,7 @@ export default function App() {
           <div>
             <h1 style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:26,letterSpacing:"-0.5px"}}><span style={{color:"#F5C400"}}>FUSE</span> <span style={{color:"#fff"}}>JD Generator</span></h1>
             <p style={{fontSize:13,color:MUTED,marginTop:6,fontWeight:300}}>FUSE · Defense Autonomy & Robotics · Elbit Systems</p>
+            {process.env.NEXT_PUBLIC_VERSION&&<p style={{fontSize:10,color:"#2a4a48",marginTop:4,fontFamily:"monospace",letterSpacing:"0.5px"}}>{process.env.NEXT_PUBLIC_VERSION}</p>}
           </div>
         </div>
 
