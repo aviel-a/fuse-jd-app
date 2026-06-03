@@ -1,8 +1,8 @@
-const { execSync } = require("child_process");
+const fs = require("fs");
 
 let version = "dev";
 try {
-  version = "v" + execSync("git rev-list --count HEAD").toString().trim();
+  version = "v" + fs.readFileSync("./version.txt", "utf8").trim();
 } catch {}
 
 /** @type {import('next').NextConfig} */
