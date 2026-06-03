@@ -43,11 +43,11 @@ function buildZip(files) {
 // ─── FUSE logo PNG via canvas ─────────────────────────────────────────────
 function generateFuseLogo() {
   if (typeof document === "undefined") return null;
-  const size = 120, scale = size / 52;
+  const starPx = 90, scale = starPx / 52, W = 300, H = starPx;
   const canvas = document.createElement("canvas");
-  canvas.width = size; canvas.height = size;
+  canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, W, H);
   const draw = (pts, color) => {
     ctx.fillStyle = color; ctx.beginPath();
     pts.forEach(([x,y],i) => i ? ctx.lineTo(x*scale,y*scale) : ctx.moveTo(x*scale,y*scale));
@@ -55,6 +55,10 @@ function generateFuseLogo() {
   };
   draw([[26,2],[34,18],[52,18],[38,30],[44,48],[26,38],[8,48],[14,30],[0,18],[18,18]],"#F5C400");
   draw([[26,10],[31,20],[42,20],[33,27],[37,38],[26,31],[15,38],[19,27],[10,20],[21,20]],"#1a1400");
+  ctx.fillStyle = "#F5C400";
+  ctx.font = "bold 48px Arial";
+  ctx.textBaseline = "middle";
+  ctx.fillText("FUSE", starPx + 12, H / 2);
   return canvas.toDataURL("image/png").split(",")[1];
 }
 function base64ToBytes(b64) {
@@ -75,7 +79,7 @@ function generateDocx(data) {
   const{title,team,level,location,jobNumber,roleIntro,responsibilities,requirements,preferredQuals,hasPreferred}=data;
 
   const logoPng=generateFuseLogo();
-  const logoXml=logoPng?`<w:p><w:pPr><w:jc w:val="right"/><w:spacing w:after="0"/></w:pPr><w:r><w:drawing><wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" distT="0" distB="0" distL="0" distR="0"><wp:extent cx="548640" cy="548640"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="1" name="FUSE Logo"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="1" name="FUSE Logo"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rId3"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="548640" cy="548640"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`:"";
+  const logoXml=logoPng?`<w:p><w:pPr><w:jc w:val="right"/><w:spacing w:after="0"/></w:pPr><w:r><w:drawing><wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" distT="0" distB="0" distL="0" distR="0"><wp:extent cx="2286000" cy="685800"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="1" name="FUSE Logo"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="1" name="FUSE Logo"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rId3"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="2286000" cy="685800"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`:"";
 
   const parts=[
     logoXml,
@@ -188,6 +192,13 @@ function JDPreview({ title, level, team, location, jobNumber, roleIntro, respons
   );
   return (
     <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "32px 36px" }}>
+      <div style={{ display:"flex", justifyContent:"flex-end", alignItems:"center", gap:8, marginBottom:16 }}>
+        <svg width="28" height="28" viewBox="0 0 52 52" fill="none">
+          <polygon points="26,2 34,18 52,18 38,30 44,48 26,38 8,48 14,30 0,18 18,18" fill="#F5C400"/>
+          <polygon points="26,10 31,20 42,20 33,27 37,38 26,31 15,38 19,27 10,20 21,20" fill="#1a1400"/>
+        </svg>
+        <span style={{ fontFamily:"Syne,sans-serif", fontWeight:800, fontSize:18, color:TEAL }}>FUSE</span>
+      </div>
       <div style={{ fontFamily: "Syne,sans-serif", fontWeight: 800, fontSize: 30, color: TEAL, lineHeight: 1.2, marginBottom: 10 }}>
         {level} {title}
       </div>
@@ -220,8 +231,7 @@ function JDPreview({ title, level, team, location, jobNumber, roleIntro, respons
       <div style={{ height: 24 }} />
       <p style={{ fontSize: 13.5, lineHeight: 1.75, color: "#d4eeec", marginBottom: 10 }}>{SIGNOFF[0]}</p>
       <p style={{ fontSize: 13.5, lineHeight: 1.75, color: MUTED, fontStyle: "italic", marginBottom: 20 }}>{SIGNOFF[1]}</p>
-      <p style={{ fontFamily: "DM Mono,monospace", fontSize: 11, color: "#555", marginBottom: 4 }}>Only relevant applications will be answered**</p>
-      <p style={{ fontFamily: "DM Mono,monospace", fontSize: 11, color: "#555" }}>{location}#</p>
+      <p style={{ fontFamily: "DM Mono,monospace", fontSize: 11, color: "#555" }}>Only relevant applications will be answered**</p>
     </div>
   );
 }
