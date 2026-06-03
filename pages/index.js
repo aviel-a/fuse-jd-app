@@ -132,14 +132,22 @@ Keep unchanged sections intact. Maintain FUSE tone: active voice, short sentence
 }
 
 // ─── JD Preview component ────────────────────────────────────────────────
-function JDPreview({ title, level, team, location, jobNumber, roleIntro, responsibilities, requirements, hasPreferred, preferredQuals }) {
+function JDPreview({ title, level, team, location, jobNumber, roleIntro, responsibilities, requirements, hasPreferred, preferredQuals, onDeleteResponsibility, onDeleteRequirement, onDeletePreferredQual }) {
   const secHead = (text) => (
     <div style={{ fontFamily: "DM Mono,monospace", fontSize: 11, fontWeight: 500, color: TEAL, letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: 10, marginTop: 22 }}>
       {text}
     </div>
   );
+  const delBtn = (onDel, i) => onDel ? (
+    <button onClick={() => onDel(i)} style={{ background:"transparent", border:"none", color:"#3a5a58", cursor:"pointer", fontSize:15, lineHeight:1, flexShrink:0, padding:"0 0 0 8px" }}>×</button>
+  ) : null;
+  const li = (text, i, onDel) => (
+    <li key={i} style={{ fontSize: 13.5, lineHeight: 1.75, color: "#d4eeec", marginBottom: 4, display:"flex", alignItems:"baseline" }}>
+      <span style={{flex:1}}>{text}</span>{delBtn(onDel, i)}
+    </li>
+  );
   return (
-    <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "32px 36px", overflowY: "auto", maxHeight: 620 }}>
+    <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "32px 36px" }}>
       <div style={{ fontFamily: "Syne,sans-serif", fontWeight: 800, fontSize: 30, color: TEAL, lineHeight: 1.2, marginBottom: 10 }}>
         {level} {title}
       </div>
@@ -155,23 +163,17 @@ function JDPreview({ title, level, team, location, jobNumber, roleIntro, respons
       <p style={{ fontSize: 13.5, lineHeight: 1.75, color: "#d4eeec", marginBottom: 4 }}>{roleIntro}</p>
       {secHead("In this role you will")}
       <ul style={{ paddingLeft: 18, margin: 0 }}>
-        {responsibilities.filter(r => r.trim()).map((r, i) => (
-          <li key={i} style={{ fontSize: 13.5, lineHeight: 1.75, color: "#d4eeec", marginBottom: 4 }}>{r}</li>
-        ))}
+        {responsibilities.filter(r => r.trim()).map((r, i) => li(r, i, onDeleteResponsibility))}
       </ul>
       {secHead("Requirements")}
       <ul style={{ paddingLeft: 18, margin: 0 }}>
-        {requirements.filter(r => r.trim()).map((r, i) => (
-          <li key={i} style={{ fontSize: 13.5, lineHeight: 1.75, color: "#d4eeec", marginBottom: 4 }}>{r}</li>
-        ))}
+        {requirements.filter(r => r.trim()).map((r, i) => li(r, i, onDeleteRequirement))}
       </ul>
       {hasPreferred && preferredQuals.some(q => q.trim()) && (
         <>
           {secHead("Preferred qualifications")}
           <ul style={{ paddingLeft: 18, margin: 0 }}>
-            {preferredQuals.filter(q => q.trim()).map((q, i) => (
-              <li key={i} style={{ fontSize: 13.5, lineHeight: 1.75, color: "#d4eeec", marginBottom: 4 }}>{q}</li>
-            ))}
+            {preferredQuals.filter(q => q.trim()).map((q, i) => li(q, i, onDeletePreferredQual))}
           </ul>
         </>
       )}
@@ -438,7 +440,11 @@ export default function App() {
             </div>
             {/* scrollable body */}
             <div style={{overflowY:"auto",padding:"24px 32px",flex:1}}>
-              <JDPreview title={title} level={level} team={team} location={location} jobNumber={jobNumber} roleIntro={roleIntro} responsibilities={responsibilities} requirements={requirements} hasPreferred={hasPreferred} preferredQuals={preferredQuals}/>
+              <JDPreview title={title} level={level} team={team} location={location} jobNumber={jobNumber} roleIntro={roleIntro} responsibilities={responsibilities} requirements={requirements} hasPreferred={hasPreferred} preferredQuals={preferredQuals}
+                onDeleteResponsibility={(i)=>{const u=responsibilities.filter((_,j)=>j!==i);setResponsibilities(u);setDocxBlob(generateDocx({title,team,level,location,jobNumber,roleIntro,responsibilities:u.filter(r=>r.trim()),requirements:requirements.filter(r=>r.trim()),preferredQuals:preferredQuals.filter(q=>q.trim()),hasPreferred}));}}
+                onDeleteRequirement={(i)=>{const u=requirements.filter((_,j)=>j!==i);setRequirements(u);setDocxBlob(generateDocx({title,team,level,location,jobNumber,roleIntro,responsibilities:responsibilities.filter(r=>r.trim()),requirements:u.filter(r=>r.trim()),preferredQuals:preferredQuals.filter(q=>q.trim()),hasPreferred}));}}
+                onDeletePreferredQual={(i)=>{const u=preferredQuals.filter((_,j)=>j!==i);setPreferredQuals(u);setDocxBlob(generateDocx({title,team,level,location,jobNumber,roleIntro,responsibilities:responsibilities.filter(r=>r.trim()),requirements:requirements.filter(r=>r.trim()),preferredQuals:u.filter(q=>q.trim()),hasPreferred}));}}
+              />
             </div>
             {/* footer */}
             <div style={{padding:"16px 24px",borderTop:`1px solid ${BORDER}`,flexShrink:0,display:"flex",flexDirection:"column",gap:10}}>
