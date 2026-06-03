@@ -40,6 +40,29 @@ function buildZip(files) {
   return new Blob([out],{type:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
 }
 
+// ─── FUSE logo PNG via canvas ─────────────────────────────────────────────
+function generateFuseLogo() {
+  if (typeof document === "undefined") return null;
+  const size = 120, scale = size / 52;
+  const canvas = document.createElement("canvas");
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, size, size);
+  const draw = (pts, color) => {
+    ctx.fillStyle = color; ctx.beginPath();
+    pts.forEach(([x,y],i) => i ? ctx.lineTo(x*scale,y*scale) : ctx.moveTo(x*scale,y*scale));
+    ctx.closePath(); ctx.fill();
+  };
+  draw([[26,2],[34,18],[52,18],[38,30],[44,48],[26,38],[8,48],[14,30],[0,18],[18,18]],"#F5C400");
+  draw([[26,10],[31,20],[42,20],[33,27],[37,38],[26,31],[15,38],[19,27],[10,20],[21,20]],"#1a1400");
+  return canvas.toDataURL("image/png").split(",")[1];
+}
+function base64ToBytes(b64) {
+  const bin = atob(b64), arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return arr;
+}
+
 // ─── DOCX builder ────────────────────────────────────────────────────────
 function generateDocx(data) {
   const T="F5C400",G="555555";
@@ -50,7 +73,12 @@ function generateDocx(data) {
   const rule=()=>`<w:p><w:pPr><w:spacing w:after="120"/><w:pBdr><w:bottom w:val="single" w:sz="12" w:space="1" w:color="${T}"/></w:pBdr></w:pPr></w:p>`;
   const sp=()=>`<w:p><w:pPr><w:spacing w:after="120"/></w:pPr></w:p>`;
   const{title,team,level,location,jobNumber,roleIntro,responsibilities,requirements,preferredQuals,hasPreferred}=data;
+
+  const logoPng=generateFuseLogo();
+  const logoXml=logoPng?`<w:p><w:pPr><w:jc w:val="right"/><w:spacing w:after="0"/></w:pPr><w:r><w:drawing><wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" distT="0" distB="0" distL="0" distR="0"><wp:extent cx="548640" cy="548640"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="1" name="FUSE Logo"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="1" name="FUSE Logo"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rId3"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="548640" cy="548640"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`:"";
+
   const parts=[
+    logoXml,
     `<w:p><w:pPr><w:spacing w:after="80"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:b/><w:sz w:val="52"/><w:szCs w:val="52"/><w:color w:val="${T}"/></w:rPr><w:t>${esc(`${level} ${title}`)}</w:t></w:r></w:p>`,
     rule(),para(`${location}  |  ${team}${jobNumber?"  |  Job #"+jobNumber:""}`,{size:20,color:G,spaceAfter:200}),
     para("Let's make an impact on tomorrow's battlefield.",{italic:true,spaceAfter:40}),
@@ -61,14 +89,26 @@ function generateDocx(data) {
     h("Requirements"),...requirements.filter(r=>r.trim()).map(bl),
   ];
   if(hasPreferred&&preferredQuals.some(q=>q.trim())){parts.push(sp(),h("Preferred qualifications"));preferredQuals.filter(q=>q.trim()).forEach(q=>parts.push(bl(q)));}
-  parts.push(sp(),para("This is your chance to be a part of a new and exciting opportunity, work on complex, high-stakes systems, push the boundaries of autonomy and robotics, and build technology that makes an instant impact.",{spaceAfter:80}),para("If you're looking to move fast, think big, and shape what comes next, we want you with us.",{italic:true,spaceAfter:0}),sp(),para("Only relevant applications will be answered**",{color:G,spaceAfter:40}),para(`${location}#`,{color:G,spaceAfter:0}));
-  const docXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${parts.join("")}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134"/></w:sectPr></w:body></w:document>`;
+  parts.push(
+    sp(),
+    para("This is your chance to be a part of a new and exciting opportunity, work on complex, high-stakes systems, push the boundaries of autonomy and robotics, and build technology that makes an instant impact.",{spaceAfter:80}),
+    para("If you're looking to move fast, think big, and shape what comes next, we want you with us.",{italic:true,spaceAfter:0}),
+    sp(),
+    h("About FUSE"),
+    para("FUSE is building the next generation of autonomous defense technology — intelligent robotic systems and multi-domain platforms that redefine how forces operate, sense, decide, and act. Our teams own the full stack end-to-end: from hardware and embedded systems to robotics, autonomy, AI, and real-time decision-making. Under Elbit Systems, we combine the speed and ownership culture of a startup with the manufacturing power of a global defense leader.",{spaceAfter:80}),
+    sp(),
+    para("Only relevant applications will be answered**",{color:G,spaceAfter:0})
+  );
+
+  const docXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><w:body>${parts.join("")}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134"/></w:sectPr></w:body></w:document>`;
   const numXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:numbering xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:abstractNum w:abstractNumId="0"><w:lvl w:ilvl="0"><w:start w:val="1"/><w:numFmt w:val="bullet"/><w:lvlText w:val="&#x2022;"/><w:lvlJc w:val="left"/><w:pPr><w:ind w:left="720" w:hanging="360"/></w:pPr><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:sz w:val="21"/></w:rPr></w:lvl></w:abstractNum><w:num w:numId="1"><w:abstractNumId w:val="0"/></w:num></w:numbering>`;
   const stylesXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:sz w:val="21"/><w:szCs w:val="21"/></w:rPr></w:rPrDefault></w:docDefaults></w:styles>`;
-  const ct=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/numbering.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>`;
+  const ct=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>${logoPng?'<Default Extension="png" ContentType="image/png"/>':''}<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/numbering.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>`;
   const rels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`;
-  const wrels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/numbering" Target="numbering.xml"/></Relationships>`;
-  return buildZip({"[Content_Types].xml":ct,"_rels/.rels":rels,"word/document.xml":docXml,"word/styles.xml":stylesXml,"word/numbering.xml":numXml,"word/_rels/document.xml.rels":wrels});
+  const wrels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/numbering" Target="numbering.xml"/>${logoPng?'<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/logo.png"/>':''}</Relationships>`;
+  const files={"[Content_Types].xml":ct,"_rels/.rels":rels,"word/document.xml":docXml,"word/styles.xml":stylesXml,"word/numbering.xml":numXml,"word/_rels/document.xml.rels":wrels};
+  if(logoPng) files["word/media/logo.png"]=base64ToBytes(logoPng);
+  return buildZip(files);
 }
 
 // ─── API call (goes through /api/anthropic proxy) ────────────────────────
