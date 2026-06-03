@@ -224,7 +224,15 @@ export default function App() {
   const [refinementNote,setRefinementNote]=useState("");
   const [refining,setRefining]=useState(false);
   const previewRef=useRef(null);
-  useEffect(()=>{if(docxBlob&&previewRef.current)previewRef.current.scrollIntoView({behavior:"smooth",block:"start"});},[docxBlob]);
+  const [showJumpBadge,setShowJumpBadge]=useState(false);
+  useEffect(()=>{
+    if(!docxBlob){setShowJumpBadge(false);return;}
+    setShowJumpBadge(true);
+    if(!previewRef.current)return;
+    const obs=new IntersectionObserver(([e])=>{if(e.isIntersecting)setShowJumpBadge(false);},{threshold:0.1});
+    obs.observe(previewRef.current);
+    return()=>obs.disconnect();
+  },[docxBlob]);
 
   const field=(label,children)=>(
     <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:16}}>
@@ -309,7 +317,7 @@ export default function App() {
   return (
     <>
       <Head><title>FUSE JD Generator</title><link rel="preconnect" href="https://fonts.googleapis.com"/><link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/></Head>
-      <style>{`*{box-sizing:border-box;margin:0;padding:0}body{background:${DARK};color:#d4eeec;font-family:Inter,sans-serif;min-height:100vh}select option{background:#1a2b29}input::placeholder,textarea::placeholder{color:${MUTED}}`}</style>
+      <style>{`*{box-sizing:border-box;margin:0;padding:0}body{background:${DARK};color:#d4eeec;font-family:Inter,sans-serif;min-height:100vh}select option{background:#1a2b29}input::placeholder,textarea::placeholder{color:${MUTED}}@keyframes spin{to{transform:rotate(360deg)}}@keyframes badgeFadeIn{from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes badgeBounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-7px)}}`}</style>
 
       <div style={{maxWidth:820,margin:"0 auto",padding:"40px 24px 80px"}}>
 
@@ -380,7 +388,6 @@ export default function App() {
               Generating…
             </> : <>⚡ Generate Job Description</>}
           </button>
-          <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
           {status&&(
             <div style={{background:status.type==="error"?"#1a0a0a":status.type==="success"?"#0a1f18":CARD,border:`1px solid ${status.type==="error"?"#4a1a1a":status.type==="success"?"#1a3d30":BORDER}`,borderRadius:8,padding:"14px 18px",marginTop:16,fontFamily:"monospace",fontSize:12,color:status.type==="error"?"#ff8080":status.type==="success"?"#7aedc5":TEAL,display:"flex",alignItems:"center",gap:10}}>
@@ -432,6 +439,13 @@ export default function App() {
           </div>
         )}
       </div>
+
+      {showJumpBadge&&(
+        <div onClick={()=>{previewRef.current?.scrollIntoView({behavior:"smooth",block:"start"});}}
+          style={{position:"fixed",bottom:88,left:"50%",background:TEAL,color:DARK,borderRadius:20,padding:"8px 20px",fontFamily:"monospace",fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:6,zIndex:100,userSelect:"none",boxShadow:"0 4px 20px rgba(245,196,0,0.4)",animation:"badgeFadeIn 0.3s ease forwards, badgeBounce 1.4s ease 0.3s infinite"}}>
+          ↓ Preview ready
+        </div>
+      )}
     </>
   );
 }
