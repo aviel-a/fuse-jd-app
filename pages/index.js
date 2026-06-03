@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Head from "next/head";
 
 const TEAL = "#F5C400";
@@ -223,16 +223,12 @@ export default function App() {
   const [showInsights,setShowInsights]=useState(false);
   const [refinementNote,setRefinementNote]=useState("");
   const [refining,setRefining]=useState(false);
-  const previewRef=useRef(null);
-  const [showJumpBadge,setShowJumpBadge]=useState(false);
+  const [showPreview,setShowPreview]=useState(false);
   useEffect(()=>{
-    if(!docxBlob){setShowJumpBadge(false);return;}
-    setShowJumpBadge(true);
-    if(!previewRef.current)return;
-    const obs=new IntersectionObserver(([e])=>{if(e.isIntersecting)setShowJumpBadge(false);},{threshold:0.1});
-    obs.observe(previewRef.current);
-    return()=>obs.disconnect();
-  },[docxBlob]);
+    const onKey=(e)=>{if(e.key==="Escape")setShowPreview(false);};
+    window.addEventListener("keydown",onKey);
+    return()=>window.removeEventListener("keydown",onKey);
+  },[]);
 
   const field=(label,children)=>(
     <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:16}}>
@@ -267,6 +263,7 @@ export default function App() {
       setStatus({type:"loading",msg:"Building .docx…"});
       const blob = generateDocx({title,team,level,location,jobNumber,roleIntro:ri||`A ${level} ${title} to join our team.`,responsibilities:resp.filter(r=>r.trim()),requirements:reqs.filter(r=>r.trim()),preferredQuals:pref.filter(q=>q.trim()),hasPreferred});
       setDocxBlob(blob);
+      setShowPreview(true);
       setStatus({type:"success",msg:"Document ready — click to download."});
     } catch(err) {
       setStatus({type:"error",msg:err.message});
@@ -303,6 +300,7 @@ export default function App() {
       if (pref.length) { setHasPreferred(true); setPreferredQuals(pref); }
       const blob = generateDocx({ title, team, level, location, jobNumber, roleIntro: ri, responsibilities: resp.filter(r => r.trim()), requirements: reqs.filter(r => r.trim()), preferredQuals: pref.filter(q => q.trim()), hasPreferred: pref.length > 0 || hasPreferred });
       setDocxBlob(blob);
+      setShowPreview(true);
       setStatus({ type: "success", msg: "Refined — document updated." });
       setRefinementNote("");
     } catch (err) {
@@ -317,7 +315,7 @@ export default function App() {
   return (
     <>
       <Head><title>FUSE JD Generator</title><link rel="preconnect" href="https://fonts.googleapis.com"/><link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/></Head>
-      <style>{`*{box-sizing:border-box;margin:0;padding:0}body{background:${DARK};color:#d4eeec;font-family:Inter,sans-serif;min-height:100vh}select option{background:#1a2b29}input::placeholder,textarea::placeholder{color:${MUTED}}@keyframes spin{to{transform:rotate(360deg)}}@keyframes badgeFadeIn{from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes badgeBounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-7px)}}`}</style>
+      <style>{`*{box-sizing:border-box;margin:0;padding:0}body{background:${DARK};color:#d4eeec;font-family:Inter,sans-serif;min-height:100vh}select option{background:#1a2b29}input::placeholder,textarea::placeholder{color:${MUTED}}@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       <div style={{maxWidth:820,margin:"0 auto",padding:"40px 24px 80px"}}>
 
@@ -425,26 +423,46 @@ export default function App() {
           )}
         </div>
 
-        {docxBlob&&(
-          <div ref={previewRef} style={{marginTop:8,paddingBottom:80}}>
-            <JDPreview title={title} level={level} team={team} location={location} jobNumber={jobNumber} roleIntro={roleIntro} responsibilities={responsibilities} requirements={requirements} hasPreferred={hasPreferred} preferredQuals={preferredQuals}/>
-            <div style={{marginTop:14,display:"flex",gap:10,alignItems:"flex-start"}}>
-              <textarea value={refinementNote} onChange={e=>setRefinementNote(e.target.value)} placeholder="Tell the AI what to change… e.g. Make the tone more senior, add Python to requirements"
-                style={{flex:1,background:CARD,border:`1px solid ${BORDER}`,borderRadius:6,color:"#d4eeec",fontSize:13.5,padding:"10px 14px",fontFamily:"Inter,sans-serif",outline:"none",minHeight:52,resize:"vertical",lineHeight:1.5}}/>
-              <button onClick={handleRefine} disabled={refining||!refinementNote.trim()}
-                style={{background:"transparent",border:`1px solid ${TEAL}`,borderRadius:6,color:TEAL,cursor:refining||!refinementNote.trim()?"not-allowed":"pointer",fontFamily:"monospace",fontSize:12,padding:"12px 18px",opacity:refining||!refinementNote.trim()?0.45:1,whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
-                {refining?<><div style={{width:12,height:12,border:"2px solid rgba(245,196,0,0.3)",borderTopColor:TEAL,borderRadius:"50%",animation:"spin 0.7s linear infinite"}}/>Refining…</>:"↻ Refine"}
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
-      {showJumpBadge&&(
-        <div onClick={()=>{previewRef.current?.scrollIntoView({behavior:"smooth",block:"start"});}}
-          style={{position:"fixed",bottom:88,left:"50%",background:TEAL,color:DARK,borderRadius:20,padding:"8px 20px",fontFamily:"monospace",fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:6,zIndex:100,userSelect:"none",boxShadow:"0 4px 20px rgba(245,196,0,0.4)",animation:"badgeFadeIn 0.3s ease forwards, badgeBounce 1.4s ease 0.3s infinite"}}>
-          ↓ Preview ready
-        </div>
+      {showPreview&&(
+        <>
+          <div onClick={()=>setShowPreview(false)}
+            style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.78)",zIndex:200}}/>
+          <div style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:"min(860px,95vw)",maxHeight:"90vh",background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,zIndex:201,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+            {/* header */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 24px",borderBottom:`1px solid ${BORDER}`,flexShrink:0}}>
+              <span style={{fontFamily:"monospace",fontSize:11,color:MUTED,letterSpacing:1,textTransform:"uppercase"}}>Preview</span>
+              <button onClick={()=>setShowPreview(false)}
+                style={{background:"transparent",border:"none",color:MUTED,fontSize:22,cursor:"pointer",lineHeight:1,padding:0}}>×</button>
+            </div>
+            {/* scrollable body */}
+            <div style={{overflowY:"auto",padding:"24px 32px",flex:1}}>
+              <JDPreview title={title} level={level} team={team} location={location} jobNumber={jobNumber} roleIntro={roleIntro} responsibilities={responsibilities} requirements={requirements} hasPreferred={hasPreferred} preferredQuals={preferredQuals}/>
+            </div>
+            {/* footer */}
+            <div style={{padding:"16px 24px",borderTop:`1px solid ${BORDER}`,flexShrink:0,display:"flex",flexDirection:"column",gap:10}}>
+              <div style={{display:"flex",gap:10}}>
+                <button onClick={handleDownload}
+                  style={{background:"transparent",border:`1px solid ${TEAL}`,borderRadius:6,color:TEAL,cursor:"pointer",fontFamily:"monospace",fontSize:12,padding:"8px 16px",display:"flex",alignItems:"center",gap:6}}>
+                  ↓ Download .docx
+                </button>
+                <button onClick={handleShare}
+                  style={{background:"transparent",border:`1px solid ${BORDER}`,borderRadius:6,color:"#7aada9",cursor:"pointer",fontFamily:"monospace",fontSize:12,padding:"8px 16px",display:"flex",alignItems:"center",gap:6}}>
+                  ↗ Share
+                </button>
+              </div>
+              <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
+                <textarea value={refinementNote} onChange={e=>setRefinementNote(e.target.value)} placeholder="Tell the AI what to change… e.g. Make the tone more senior, add Python to requirements"
+                  style={{flex:1,background:DARK,border:`1px solid ${BORDER}`,borderRadius:6,color:"#d4eeec",fontSize:13,padding:"9px 14px",fontFamily:"Inter,sans-serif",outline:"none",minHeight:46,resize:"vertical",lineHeight:1.5}}/>
+                <button onClick={handleRefine} disabled={refining||!refinementNote.trim()}
+                  style={{background:"transparent",border:`1px solid ${TEAL}`,borderRadius:6,color:TEAL,cursor:refining||!refinementNote.trim()?"not-allowed":"pointer",fontFamily:"monospace",fontSize:12,padding:"11px 16px",opacity:refining||!refinementNote.trim()?0.45:1,whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+                  {refining?<><div style={{width:11,height:11,border:"2px solid rgba(245,196,0,0.3)",borderTopColor:TEAL,borderRadius:"50%",animation:"spin 0.7s linear infinite"}}/>Refining…</>:"↻ Refine"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </>
   );
