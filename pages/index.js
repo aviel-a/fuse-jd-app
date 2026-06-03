@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Head from "next/head";
 
 const TEAL = "#F5C400";
@@ -223,6 +223,8 @@ export default function App() {
   const [showInsights,setShowInsights]=useState(false);
   const [refinementNote,setRefinementNote]=useState("");
   const [refining,setRefining]=useState(false);
+  const previewRef=useRef(null);
+  useEffect(()=>{if(docxBlob&&previewRef.current)previewRef.current.scrollIntoView({behavior:"smooth",block:"start"});},[docxBlob]);
 
   const field=(label,children)=>(
     <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:16}}>
@@ -416,7 +418,7 @@ export default function App() {
         </div>
 
         {docxBlob&&(
-          <div style={{marginTop:8,paddingBottom:80}}>
+          <div ref={previewRef} style={{marginTop:8,paddingBottom:80}}>
             <JDPreview title={title} level={level} team={team} location={location} jobNumber={jobNumber} roleIntro={roleIntro} responsibilities={responsibilities} requirements={requirements} hasPreferred={hasPreferred} preferredQuals={preferredQuals}/>
             <div style={{marginTop:14,display:"flex",gap:10,alignItems:"flex-start"}}>
               <textarea value={refinementNote} onChange={e=>setRefinementNote(e.target.value)} placeholder="Tell the AI what to change… e.g. Make the tone more senior, add Python to requirements"
